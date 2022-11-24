@@ -17,7 +17,7 @@ try:
 except:
     print("Erreur, la page de connexion est incorrecte...")
 
-for code in range(1000, 9999+1):
+for code in range(1000, 9999):
     # On teste le code
     try:
         driver.find_element(By.CSS_SELECTOR, 'input[name="code"]').send_keys(code)

